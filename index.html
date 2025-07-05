@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="manifest" href="manifest.json">
   <title>TwinkleNote ✨</title>
+  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -21,22 +21,44 @@
       margin-bottom: 10px;
     }
 
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .tabs button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      background-color: #ddd;
+      color: #333;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background-color: #a24ac3;
+      color: white;
+    }
+
     .note-form {
       margin-bottom: 20px;
     }
 
     textarea {
       width: 90%;
-      max-width: 500px;
-      height: 80px;
-      padding: 10px;
-      border-radius: 8px;
+      max-width: 600px;
+      height: 150px;
+      padding: 15px;
+      border-radius: 10px;
       border: 1px solid #aaa;
       resize: none;
       font-size: 1rem;
     }
 
-    button {
+    button.add-btn {
       background: #a24ac3;
       color: white;
       border: none;
@@ -47,7 +69,7 @@
       font-size: 1rem;
     }
 
-    button:hover {
+    button.add-btn:hover {
       background: #9029b3;
     }
 
@@ -77,9 +99,12 @@
       font-size: 0.9rem;
       padding: 5px 12px;
       margin-right: 10px;
+      border: none;
+      border-radius: 8px;
     }
 
-    .note-buttons button:hover {
+    .note-buttons button:hover,
+    .bin-buttons button:hover {
       background: #ccc;
     }
 
@@ -92,25 +117,30 @@
       color: #999;
       font-style: italic;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>✨ TwinkleNote ✨</h1>
 
-  <div class="note-form">
+  <div class="tabs">
+    <button id="tabNotes" class="active" onclick="showTab('notes')">📝 Notes</button>
+    <button id="tabBin" onclick="showTab('bin')">🗑️ Recycle Bin</button>
+  </div>
+
+  <div class="note-form" id="noteForm">
     <textarea id="noteInput" placeholder="Write a note that twinkles..."></textarea><br>
-    <button onclick="addNote()">Add Note</button>
+    <button class="add-btn" onclick="addNote()">Add Note</button>
   </div>
 
-  <div class="note-container">
-    <h2>Your Notes 📝</h2>
-    <div id="notesList" class="notes-list"></div>
-  </div>
+  <!-- Notes Section -->
+  <div id="notesSection" class="note-container"></div>
 
-  <div class="bin-container">
-    <h2>🗑️ Recycle Bin</h2>
-    <div id="binList" class="bin-list"></div>
-  </div>
+  <!-- Recycle Bin Section -->
+  <div id="binSection" class="bin-container hidden"></div>
 
   <script>
     let notes = JSON.parse(localStorage.getItem('notes')) || [];
@@ -122,7 +152,7 @@
     }
 
     function renderNotes() {
-      const list = document.getElementById('notesList');
+      const list = document.getElementById('notesSection');
       list.innerHTML = '';
       if (notes.length === 0) list.innerHTML = '<p class="empty">No notes yet. Add something sparkly!</p>';
       notes.forEach((text, i) => {
@@ -140,7 +170,7 @@
     }
 
     function renderBin() {
-      const list = document.getElementById('binList');
+      const list = document.getElementById('binSection');
       list.innerHTML = '';
       if (bin.length === 0) list.innerHTML = '<p class="empty">Recycle bin is empty ✨</p>';
       bin.forEach((text, i) => {
@@ -160,11 +190,12 @@
     function addNote() {
       const input = document.getElementById('noteInput');
       const text = input.value.trim();
-      if (text) {
+      if (text !== '') {
         notes.push(text);
         input.value = '';
         saveAll();
         renderNotes();
+        showTab('notes');
       }
     }
 
@@ -173,7 +204,6 @@
       bin.unshift(removed[0]);
       saveAll();
       renderNotes();
-      renderBin();
     }
 
     function restoreNote(index) {
@@ -193,7 +223,7 @@
       const div = document.getElementById(`noteText${index}`);
       if (div.contentEditable === "true") {
         div.contentEditable = "false";
-        notes[index] = div.innerText;
+        notes[index] = div.innerText.trim();
         saveAll();
       } else {
         div.contentEditable = "true";
@@ -201,9 +231,29 @@
       }
     }
 
-    // Initial render
+    function showTab(tab) {
+      const notesTab = document.getElementById('notesSection');
+      const binTab = document.getElementById('binSection');
+      const noteForm = document.getElementById('noteForm');
+
+      if (tab === 'notes') {
+        notesTab.classList.remove('hidden');
+        binTab.classList.add('hidden');
+        noteForm.classList.remove('hidden');
+        document.getElementById('tabNotes').classList.add('active');
+        document.getElementById('tabBin').classList.remove('active');
+      } else {
+        notesTab.classList.add('hidden');
+        binTab.classList.remove('hidden');
+        noteForm.classList.add('hidden');
+        document.getElementById('tabNotes').classList.remove('active');
+        document.getElementById('tabBin').classList.add('active');
+        renderBin();
+      }
+    }
+
     renderNotes();
-    renderBin();
+
     <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js')
