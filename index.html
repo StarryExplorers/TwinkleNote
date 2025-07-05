@@ -38,6 +38,10 @@
       color: white;
     }
 
+    #noteForm {
+      margin-bottom: 30px;
+    }
+
     textarea {
       width: 90%;
       max-width: 600px;
@@ -76,6 +80,7 @@
 
     .note-text {
       margin-bottom: 10px;
+      white-space: pre-wrap;
     }
 
     .note-buttons button {
@@ -109,16 +114,16 @@
     <button id="binTab" onclick="showTab('bin')">🗑️ Recycle Bin</button>
   </div>
 
-  <!-- Note Form -->
+  <!-- 📥 Note Form -->
   <div id="noteForm">
     <textarea id="noteInput" placeholder="Write a note that twinkles..."></textarea><br>
     <button class="add-btn" onclick="addNote()">Add Note</button>
   </div>
 
-  <!-- Notes List -->
+  <!-- 📝 Notes List -->
   <div id="notesSection"></div>
 
-  <!-- Recycle Bin -->
+  <!-- 🗑️ Recycle Bin List -->
   <div id="binSection" class="hidden"></div>
 
   <script>
@@ -173,10 +178,11 @@
     }
 
     function addNote() {
-      const text = document.getElementById('noteInput').value.trim();
+      const input = document.getElementById('noteInput');
+      const text = input.value.trim();
       if (text) {
         notes.push(text);
-        document.getElementById('noteInput').value = '';
+        input.value = '';
         saveAll();
         renderNotes();
         showTab('notes');
@@ -241,7 +247,6 @@
       }
     }
 
-    // Load initial view
     renderNotes();
 
     <script>
