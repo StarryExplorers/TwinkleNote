@@ -1,0 +1,21 @@
+{
+  "name": "TwinkleNote",
+  "short_name": "TwinkleNote",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fdf6ff",
+  "theme_color": "#a24ac3",
+  "description": "A sparkly little notes app to jot down your brightest thoughts!",
+  "icons": [
+    {
+      "src": "icon-192.png"
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
