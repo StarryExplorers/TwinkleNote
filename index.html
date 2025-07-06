@@ -43,18 +43,22 @@
       margin-bottom: 1rem;
     }
 
+    .note-input input,
     .note-input textarea {
       width: 100%;
-      height: 100px;
       padding: 0.7rem;
       border-radius: 10px;
       border: 1px solid #ccc;
-      resize: vertical;
       font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .note-input textarea {
+      height: 100px;
+      resize: vertical;
     }
 
     .note-input button {
-      margin-top: 0.5rem;
       padding: 0.7rem 1.2rem;
       background-color: #6e4cc3;
       color: white;
@@ -75,6 +79,7 @@
       border-radius: 12px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       position: relative;
+      cursor: pointer;
     }
 
     .note .timestamp {
@@ -83,8 +88,16 @@
       margin-top: 0.5rem;
     }
 
-    .note button {
+    .note-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .note-buttons {
       margin-top: 0.5rem;
+    }
+
+    .note-buttons button {
       padding: 0.4rem 1rem;
       font-size: 0.9rem;
       border: none;
@@ -94,7 +107,7 @@
       margin-right: 0.5rem;
     }
 
-    .note button:hover {
+    .note-buttons button:hover {
       background-color: #ddd;
     }
   </style>
@@ -108,9 +121,9 @@
     </div>
 
     <div class="note-input">
-      <textarea id="newNote" placeholder="Write your note here..."></textarea>
-      <br />
-      <button onclick="addNote()">Add Note</button>
+      <input type="text" id="noteTitle" placeholder="Note title...">
+      <textarea id="noteBody" placeholder="Write your note here..."></textarea>
+      <button onclick="addOrUpdateNote()" id="saveBtn">Add Note</button>
     </div>
 
     <div class="notes-list" id="notesList"></div>
@@ -118,43 +131,46 @@
 
   <script>
     let notes = JSON.parse(localStorage.getItem('twinkleNotes') || '[]');
+    let editingIndex = null;
 
-    function addNote() {
-      const noteText = document.getElementById('newNote').value.trim();
-      if (noteText) {
-        notes.unshift({
-          text: noteText,
-          time: new Date().toLocaleString()
-        });
-        document.getElementById('newNote').value = '';
-        saveAndRender();
+    function saveNotes() {
+      localStorage.setItem('twinkleNotes', JSON.stringify(notes));
+    }
+
+    function addOrUpdateNote() {
+      const title = document.getElementById('noteTitle').value.trim();
+      const body = document.getElementById('noteBody').value.trim();
+
+      if (!title) return alert("Please enter a title");
+
+      const note = { title, body, time: new Date().toLocaleString() };
+
+      if (editingIndex !== null) {
+        notes[editingIndex] = note;
+        editingIndex = null;
+        document.getElementById('saveBtn').innerText = 'Add Note';
+      } else {
+        notes.unshift(note);
       }
+
+      document.getElementById('noteTitle').value = '';
+      document.getElementById('noteBody').value = '';
+      saveNotes();
+      renderNotes();
     }
 
     function deleteNote(index) {
       notes.splice(index, 1);
-      saveAndRender();
-    }
-
-    function editNote(index) {
-      const noteDiv = document.getElementById('note-' + index);
-      const btn = document.getElementById('editBtn-' + index);
-      if (btn.innerText === 'Edit') {
-        noteDiv.contentEditable = 'true';
-        noteDiv.focus();
-        btn.innerText = 'Save';
-      } else {
-        noteDiv.contentEditable = 'false';
-        notes[index].text = noteDiv.innerText;
-        notes[index].time = new Date().toLocaleString();
-        btn.innerText = 'Edit';
-        saveAndRender();
-      }
-    }
-
-    function saveAndRender() {
-      localStorage.setItem('twinkleNotes', JSON.stringify(notes));
+      saveNotes();
       renderNotes();
+    }
+
+    function viewNote(index) {
+      const note = notes[index];
+      document.getElementById('noteTitle').value = note.title;
+      document.getElementById('noteBody').value = note.body;
+      document.getElementById('saveBtn').innerText = 'Save Note';
+      editingIndex = index;
     }
 
     function renderNotes() {
@@ -162,15 +178,19 @@
       const search = document.getElementById('searchInput').value.toLowerCase();
       list.innerHTML = '';
       notes.forEach((note, i) => {
-        if (note.text.toLowerCase().includes(search)) {
-          list.innerHTML += `
-            <div class="note">
-              <div id="note-${i}" class="note-text">${note.text}</div>
-              <div class="timestamp">${note.time}</div>
-              <button id="editBtn-${i}" onclick="editNote(${i})">Edit</button>
-              <button onclick="deleteNote(${i})">Delete</button>
+        if (note.title.toLowerCase().includes(search)) {
+          const div = document.createElement('div');
+          div.className = 'note';
+          div.onclick = () => viewNote(i);
+          div.innerHTML = `
+            <div class="note-title">${note.title}</div>
+            <div class="timestamp">${note.time}</div>
+            <div class="note-buttons">
+              <button onclick="event.stopPropagation(); viewNote(${i})">Edit</button>
+              <button onclick="event.stopPropagation(); deleteNote(${i})">Delete</button>
             </div>
           `;
+          list.appendChild(div);
         }
       });
     }
