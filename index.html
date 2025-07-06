@@ -1,261 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>TwinkleNote ✨</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TwinkleNote</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom right, #fdf6ff, #e6e6fa);
+      margin: 0;
+      background: #f0f0f5;
       color: #333;
+    }
+
+    header {
+      background-color: #6e4cc3;
+      padding: 1rem;
+      color: white;
       text-align: center;
-      padding: 20px;
+      font-size: 1.8rem;
     }
 
-    h1 {
-      color: #a24ac3;
-      font-size: 2.5rem;
+    .container {
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
     }
 
-    .tabs {
-      margin: 20px 0;
+    .search-bar {
+      margin: 1rem 0;
+      display: flex;
+      justify-content: center;
     }
 
-    .tabs button {
-      padding: 10px 20px;
-      margin: 0 10px;
-      border: none;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      background: #ddd;
-    }
-
-    .tabs .active {
-      background: #a24ac3;
-      color: white;
-    }
-
-    #noteForm {
-      margin-bottom: 30px;
-    }
-
-    textarea {
-      width: 90%;
-      max-width: 600px;
-      height: 150px;
-      padding: 15px;
+    .search-bar input {
+      width: 100%;
+      padding: 0.7rem;
       border-radius: 10px;
-      border: 1px solid #aaa;
-      font-size: 1rem;
-      resize: none;
+      border: 1px solid #ccc;
     }
 
-    .add-btn {
-      background: #a24ac3;
+    .note-input {
+      margin-bottom: 1rem;
+    }
+
+    .note-input textarea {
+      width: 100%;
+      height: 100px;
+      padding: 0.7rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      font-size: 1rem;
+    }
+
+    .note-input button {
+      margin-top: 0.5rem;
+      padding: 0.7rem 1.2rem;
+      background-color: #6e4cc3;
       color: white;
-      padding: 10px 20px;
-      margin-top: 10px;
       border: none;
-      border-radius: 20px;
+      border-radius: 10px;
       cursor: pointer;
-      font-size: 1rem;
     }
 
-    .add-btn:hover {
-      background: #9029b3;
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
-    .note-box {
-      max-width: 600px;
-      margin: 15px auto;
+    .note {
       background: white;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      text-align: left;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
     }
 
-    .note-text {
-      margin-bottom: 10px;
-      white-space: pre-wrap;
+    .note .timestamp {
+      font-size: 0.8rem;
+      color: #999;
+      margin-top: 0.5rem;
     }
 
-    .note-buttons button {
-      background: #eee;
+    .note button {
+      margin-top: 0.5rem;
+      padding: 0.4rem 1rem;
+      font-size: 0.9rem;
       border: none;
-      padding: 5px 10px;
-      margin-right: 10px;
       border-radius: 6px;
+      background-color: #eee;
       cursor: pointer;
+      margin-right: 0.5rem;
     }
 
-    .note-buttons button:hover {
-      background: #ccc;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .empty {
-      font-style: italic;
-      color: #888;
+    .note button:hover {
+      background-color: #ddd;
     }
   </style>
 </head>
 <body>
-  <h1>✨ TwinkleNote ✨</h1>
+  <header>TwinkleNote</header>
 
-  <div class="tabs">
-    <button id="notesTab" class="active" onclick="showTab('notes')">📝 Notes</button>
-    <button id="binTab" onclick="showTab('bin')">🗑️ Recycle Bin</button>
+  <div class="container">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search notes..." oninput="renderNotes()">
+    </div>
+
+    <div class="note-input">
+      <textarea id="newNote" placeholder="Write your note here..."></textarea>
+      <br />
+      <button onclick="addNote()">Add Note</button>
+    </div>
+
+    <div class="notes-list" id="notesList"></div>
   </div>
-
-  <!-- 📥 Note Form -->
-  <div id="noteForm">
-    <textarea id="noteInput" placeholder="Write a note that twinkles..."></textarea><br>
-    <button class="add-btn" onclick="addNote()">Add Note</button>
-  </div>
-
-  <!-- 📝 Notes List -->
-  <div id="notesSection"></div>
-
-  <!-- 🗑️ Recycle Bin List -->
-  <div id="binSection" class="hidden"></div>
 
   <script>
-    let notes = JSON.parse(localStorage.getItem('notes') || '[]');
-    let bin = JSON.parse(localStorage.getItem('bin') || '[]');
-
-    function saveAll() {
-      localStorage.setItem('notes', JSON.stringify(notes));
-      localStorage.setItem('bin', JSON.stringify(bin));
-    }
-
-    function renderNotes() {
-      const container = document.getElementById('notesSection');
-      container.innerHTML = '';
-      if (notes.length === 0) {
-        container.innerHTML = '<p class="empty">No sparkly notes yet.</p>';
-      } else {
-        notes.forEach((note, i) => {
-          const div = document.createElement('div');
-          div.className = 'note-box';
-          div.innerHTML = `
-            <div class="note-text" contenteditable="false" id="note-${i}">${note}</div>
-            <div class="note-buttons">
-              <button onclick="toggleEdit(${i})" id="edit-btn-${i}">✏️ Edit</button>
-              <button onclick="deleteNote(${i})">🗑️ Delete</button>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      }
-    }
-
-    function renderBin() {
-      const container = document.getElementById('binSection');
-      container.innerHTML = '';
-      if (bin.length === 0) {
-        container.innerHTML = '<p class="empty">Recycle bin is empty.</p>';
-      } else {
-        bin.forEach((note, i) => {
-          const div = document.createElement('div');
-          div.className = 'note-box';
-          div.innerHTML = `
-            <div>${note}</div>
-            <div class="note-buttons">
-              <button onclick="restoreNote(${i})">♻️ Restore</button>
-              <button onclick="removeForever(${i})">❌ Delete Forever</button>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      }
-    }
+    let notes = JSON.parse(localStorage.getItem('twinkleNotes') || '[]');
 
     function addNote() {
-      const input = document.getElementById('noteInput');
-      const text = input.value.trim();
-      if (text) {
-        notes.push(text);
-        input.value = '';
-        saveAll();
-        renderNotes();
-        showTab('notes');
-      }
-    }
-
-    function toggleEdit(index) {
-      const div = document.getElementById(`note-${index}`);
-      const btn = document.getElementById(`edit-btn-${index}`);
-      if (div.contentEditable === 'true') {
-        div.contentEditable = 'false';
-        notes[index] = div.innerText.trim();
-        btn.textContent = '✏️ Edit';
-        saveAll();
-      } else {
-        div.contentEditable = 'true';
-        div.focus();
-        btn.textContent = '✅ Save';
+      const noteText = document.getElementById('newNote').value.trim();
+      if (noteText) {
+        notes.unshift({
+          text: noteText,
+          time: new Date().toLocaleString()
+        });
+        document.getElementById('newNote').value = '';
+        saveAndRender();
       }
     }
 
     function deleteNote(index) {
-      const removed = notes.splice(index, 1);
-      bin.unshift(removed[0]);
-      saveAll();
-      renderNotes();
+      notes.splice(index, 1);
+      saveAndRender();
     }
 
-    function restoreNote(index) {
-      notes.push(bin.splice(index, 1)[0]);
-      saveAll();
-      renderNotes();
-      renderBin();
-    }
-
-    function removeForever(index) {
-      bin.splice(index, 1);
-      saveAll();
-      renderBin();
-    }
-
-    function showTab(tab) {
-      const noteForm = document.getElementById('noteForm');
-      const notesSec = document.getElementById('notesSection');
-      const binSec = document.getElementById('binSection');
-      const notesTab = document.getElementById('notesTab');
-      const binTab = document.getElementById('binTab');
-
-      if (tab === 'notes') {
-        notesSec.classList.remove('hidden');
-        binSec.classList.add('hidden');
-        noteForm.classList.remove('hidden');
-        notesTab.classList.add('active');
-        binTab.classList.remove('active');
+    function editNote(index) {
+      const noteDiv = document.getElementById('note-' + index);
+      const btn = document.getElementById('editBtn-' + index);
+      if (btn.innerText === 'Edit') {
+        noteDiv.contentEditable = 'true';
+        noteDiv.focus();
+        btn.innerText = 'Save';
       } else {
-        notesSec.classList.add('hidden');
-        binSec.classList.remove('hidden');
-        noteForm.classList.add('hidden');
-        notesTab.classList.remove('active');
-        binTab.classList.add('active');
-        renderBin();
+        noteDiv.contentEditable = 'false';
+        notes[index].text = noteDiv.innerText;
+        notes[index].time = new Date().toLocaleString();
+        btn.innerText = 'Edit';
+        saveAndRender();
       }
     }
 
-    renderNotes();
+    function saveAndRender() {
+      localStorage.setItem('twinkleNotes', JSON.stringify(notes));
+      renderNotes();
+    }
 
-    <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(() => console.log("✅ TwinkleNote service worker registered!"))
-      .catch(err => console.error("❌ Service worker error:", err));
-  }
-</script>
+    function renderNotes() {
+      const list = document.getElementById('notesList');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      list.innerHTML = '';
+      notes.forEach((note, i) => {
+        if (note.text.toLowerCase().includes(search)) {
+          list.innerHTML += `
+            <div class="note">
+              <div id="note-${i}" class="note-text">${note.text}</div>
+              <div class="timestamp">${note.time}</div>
+              <button id="editBtn-${i}" onclick="editNote(${i})">Edit</button>
+              <button onclick="deleteNote(${i})">Delete</button>
+            </div>
+          `;
+        }
+      });
+    }
+
+    renderNotes();
   </script>
 </body>
 </html>
+
